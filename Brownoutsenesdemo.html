@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrownoutSense: Demo</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#dfe5ea;color:#111;font-size:16px}
+html.lg body{font-size:20px}
+#app{max-width:480px;margin:0 auto;background:#f4f6f8;min-height:100vh;padding-bottom:120px;position:relative}
+button,select,input,textarea{font:inherit}
+.banner{background:#ffe08a;color:#000;font-weight:700;padding:8px 12px;text-align:center;font-size:.85em}
+.top{background:#0b3d91;color:#fff;padding:10px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.top h1{font-size:1.1em;margin:0;flex:1}
+.btn{background:#fff;color:#0b3d91;border:2px solid #fff;border-radius:999px;padding:6px 12px;font-weight:700;cursor:pointer}
+.btn[aria-pressed=true]{background:#ffd23f;border-color:#ffd23f;color:#000}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid #ff8c00;outline-offset:2px}
+main{padding:12px}
+.view{display:none}.view.act{display:block}
+.card{background:#fff;border:1px solid #c9d1d9;border-radius:16px;padding:14px;margin-bottom:12px}
+.card h2,h2{font-size:1.1em;margin:0 0 8px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-weight:700;padding:3px 10px;border-radius:999px;color:#fff;font-size:.9em}
+.lvL{background:#0a6b33}.lvM{background:#7a4a00}.lvH{background:#a10d1f}
+.risk{width:100%;text-align:left;background:#fff;border:2px solid #c9d1d9;border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer;color:#111;display:block}
+.det{display:none;margin-top:8px;font-size:.9em}
+.risk.open .det{display:block}
+.adv{background:#fff4e5;border:2px solid #b35c00;border-radius:16px;padding:14px;margin-bottom:12px}
+.muted{color:#3d4650;font-size:.9em}
+.chip{display:inline-block;background:#333;color:#fff;border-radius:999px;padding:4px 10px;font-size:.85em;margin-top:6px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;min-height:44px}
+input[type=number],input[type=text],select,textarea{width:100%;padding:10px;border:2px solid #7d8a96;border-radius:10px;background:#fff;color:#000;margin:4px 0 10px}
+input[type=checkbox]{width:22px;height:22px;flex:none}
+.warn{background:#fde7e9;border:2px solid #a10d1f;border-radius:12px;padding:10px;margin-top:8px}
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:#fff;border-top:2px solid #c9d1d9;z-index:5}
+.tab{flex:1;background:none;border:0;padding:6px 2px;font-size:.7em;font-weight:700;cursor:pointer;color:#222;min-height:60px}
+.tab span{display:block;font-size:1.4em}
+.tab[aria-selected=true]{color:#0b3d91;border-top:4px solid #0b3d91}
+.foot{text-align:center;font-size:.8em;color:#3d4650;padding:10px}
+.big{width:100%;font-size:1.2em;padding:18px;border-radius:16px;border:0;color:#fff;font-weight:700;margin-bottom:12px;cursor:pointer;min-height:64px;background:#0b3d91}
+.hexinfo{font-weight:700;margin:8px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="banner" id="bnr" role="note"></div>
+  <header class="top">
+    <h1 id="ttl"></h1>
+    <button class="btn" id="langBtn" onclick="toggleLang()"></button>
+    <button class="btn" id="lgBtn" aria-pressed="false" onclick="toggleLg()"></button>
+  </header>
+  <main>
+    <section class="view act" id="v-home" aria-label="Home"></section>
+    <section class="view" id="v-shed" aria-label="Shed plan"></section>
+    <section class="view" id="v-map" aria-label="Map"></section>
+    <section class="view" id="v-report" aria-label="Report"></section>
+    <section class="view" id="v-prep" aria-label="Prep"></section>
+    <section class="view" id="v-admin" aria-label="Admin"></section>
+    <p class="foot" id="foot"></p>
+  </main>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+</div>
+
+<script>
+const T={
+banner:["DEMO: synthetic data, not real forecasts.","DEMO: sintetikong datos, hindi totoong forecast."],
+title:["BrownoutSense","BrownoutSense"],
+lang:["Filipino","English"],
+lg:["Large text","Malaking teksto"],
+home:["Home","Home"],shed:["Shed plan","Plano sa pagtipid"],map:["Map","Mapa"],report:["Report","Ulat"],prep:["Prep","Handa"],admin:["Admin","Admin"],
+foot:["Prototype for academic demonstration.","Prototype para sa akademikong demonstrasyon."],
+tip:["Turn on Emergency Alerts in your phone settings to receive free government warnings even without internet.","I-on ang Emergency Alerts sa settings ng phone para makatanggap ng libreng babala ng gobyerno kahit walang internet."],
+advTitle:["Official advisory","Opisyal na abiso"],
+advSrc:["Source: Electric cooperative (demo)","Pinagmulan: Electric cooperative (demo)"],
+advDate:["Date","Petsa"],advWin:["Time window","Oras"],advBrgy:["Affected barangays","Mga apektadong barangay"],
+countdown:["Starts in","Magsisimula sa loob ng"],
+extend:["May be extended if conditions persist.","Maaaring pahabain kung magpapatuloy ang panahon."],
+viewSrc:["View source","Tingnan ang pinagmulan"],
+riskTitle:["Risk outlook","Pagtaya ng panganib"],
+conf:["Confidence: low-medium. Forecasts are estimates for an area, not exact times.","Kumpiyansa: mababa-katamtaman. Ang forecast ay tantiya para sa lugar, hindi eksaktong oras."],
+upd:["Last updated","Huling na-update"],
+offline:["Offline: showing saved data","Offline: naka-save na datos ang ipinapakita"],
+offSw:["Demo: offline mode","Demo: offline mode"],
+h1:["Next 1 hour","Susunod na 1 oras"],h6:["Next 6 hours","Susunod na 6 na oras"],h24:["Next 24 hours","Susunod na 24 na oras"],h72:["Next 72 hours","Susunod na 72 na oras"],
+appl:["Appliances to keep running","Mga appliance na gagamitin"],
+backup:["Backup power","Backup na kuryente"],cap:["Capacity (Wh)","Kapasidad (Wh)"],hrs:["Expected outage (hours)","Inaasahang outage (oras)"],
+calc:["Live calculation","Kalkulasyon"],usable:["Usable energy","Magagamit na enerhiya"],totalW:["Total load","Kabuuang watts"],runtime:["Runtime","Tagal ng backup"],outage:["Outage","Outage"],
+offFirst:["Switch off first","Patayin muna"],keepOn:["Keep on","Iwanang bukas"],
+planOk:["Your backup lasts the outage. Keep everything on.","Sapat ang backup sa outage. Iwanang bukas lahat."],
+shortWarn:["Even after switching off, backup is still short.","Kulang pa rin ang backup kahit patayin ang mga ito."],
+noBk:["No backup power selected. This plan only advises. Before the outage: charge phones and power banks, pre-cool the fridge, fill water containers, and prepare flashlights.","Walang napiling backup. Payo lang ang planong ito. Bago ang outage: i-charge ang phone at power bank, palamigin ang ref, punuin ng tubig ang lalagyan, at ihanda ang flashlight."],
+co:["Carbon monoxide warning: run a generator outdoors only, away from windows and doors. Never run it indoors.","Babala sa carbon monoxide: patakbuhin lang ang generator sa labas, malayo sa bintana at pinto. Huwag kailanman sa loob."],
+tapHex:["Tap a hex to see its barangay.","I-tap ang hexagon para makita ang barangay."],
+brgyW:["Barangay","Barangay"],
+legend:["✓ Low · ⚠ Medium · ⛔ High · ● crowd report","✓ Mababa · ⚠ Katamtaman · ⛔ Mataas · ● ulat ng tao"],
+privacy:["Public view uses coarse areas for privacy.","Gumagamit ang pampublikong view ng malalawak na lugar para sa privacy."],
+mapT:["Risk map (schematic)","Mapa ng panganib (schematic)"],
+rTitle:["Report an outage","Mag-ulat ng outage"],pOut:["Power is out","Walang kuryente"],pBack:["Power is back","Bumalik ang kuryente"],
+already:["Already reported, thank you.","Naiulat na, salamat."],
+thanks:["Thank you. Report received (demo).","Salamat. Natanggap ang ulat (demo)."],
+declared:["Several neighbors reported an outage. Barangay outage declared (demo).","Maraming kapitbahay ang nag-ulat ng outage. Idineklara ang outage sa barangay (demo)."],
+rCount:["Outage reports","Mga ulat ng outage"],
+prepT:["Prepare before the outage","Maghanda bago ang outage"],
+admT:["Admin: paste advisory","Admin: i-paste ang abiso"],
+paste:["Paste advisory (Taglish)","I-paste ang abiso (Taglish)"],
+extract:["Extract fields","Kunin ang detalye"],
+fDate:["Date","Petsa"],fWin:["Time window","Oras"],fBrgy:["Barangays (comma separated)","Mga barangay (hiwalay ng kuwit)"],
+pub:["Confirm and publish","Kumpirmahin at i-publish"],
+pubOk:["Published. Home advisory updated (demo).","Na-publish. Na-update ang abiso sa Home (demo)."],
+badParse:["Could not find a time window. Check the text.","Hindi makita ang oras. Suriin ang text."],
+extOk:["Fields extracted. Check before publishing.","Nakuha ang detalye. Suriin bago i-publish."],
+adminNote:["Admin must confirm before publishing. No social media scraping.","Dapat kumpirmahin ng admin bago i-publish. Walang social media scraping."]
+};
+const LV=[["Low","Mababa"],["Medium","Katamtaman"],["High","Mataas"]];
+const ICON=["✓","⚠","⛔"],CLS=["lvL","lvM","lvH"],FILL=["#bfe8cf","#ffd27a","#f4a3a3"];
+const RISKS=[
+{k:"h1",lv:2,r:["Heavy rain expected (PAGASA orange rainfall warning)","Malakas na ulan inaasahan (PAGASA orange rainfall warning)"]},
+{k:"h6",lv:1,r:["Strong winds possible in exposed areas","Posibleng malakas na hangin sa bukas na lugar"]},
+{k:"h24",lv:1,r:["Thunderstorms forecast this afternoon","Inaasahan ang kidlat at malakas na ulan ngayong hapon"]},
+{k:"h72",lv:0,r:["Rain easing; conditions expected to improve","Humihina ang ulan; inaasahang gaganda ang panahon"]}];
+const APP=[["Fridge","Ref",150],["Lights","Ilaw",40],["Router","Router",15],["Phone chargers","Charger ng phone",20],["Electric fan","Electric fan",60],["TV","TV",100],["Laptop","Laptop",60],["Rice cooker","Rice cooker",600],["Aircon","Aircon",900]];
+const BK=[["none","No backup","Walang backup"],["power bank","Power bank","Power bank"],["battery","Battery or inverter","Baterya o inverter"],["generator","Generator","Generator"]];
+const HEX=[["Sampaguita",2],["Ilang-Ilang",1],["Gumamela",0],["Santan",1],["Rosal",0],["Kalachuchi",2],["Anahaw",1],["Dapdap",0],["Narra",1],["Molave",2],["Acacia",0],["Talisay",1]];
+const CROWD=[1,6,10];
+const PREP=[["Charge phones and power banks","I-charge ang phone at power bank"],["Pre-cool the fridge","Palamigin muna ang ref"],["Fill water containers","Punuin ng tubig ang lalagyan"],["Prepare flashlights","Ihanda ang flashlight"],["Unplug heavy appliances","Tanggalin sa saksakan ang mabibigat na appliance"],["Check on seniors and neighbors","Kamustahin ang matatanda at kapitbahay"]];
+const TM=/(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?/gi;
+const SAMPLE="OFFICIAL ADVISORY (sample)\nPetsa: Nov 7, 2026\nOras: 6:00 PM hanggang 10:00 PM\nMga apektadong barangay: Sampaguita, Ilang-Ilang, Gumamela\nMay scheduled line maintenance. Maaaring pahabain kung kailangan.";
+
+let L=0,lg=false,cur="home",offline=false,openR=[],HS=-1,RC=0,lastT={o:0,b:0},rmsg="",admMsg="",ADT=SAMPLE,AF={d:"",w:"",b:""};
+const LU=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+const adv={date:"Nov 7, 2026",start:"6:00 PM",end:"10:00 PM",hrs:4,brgy:["Sampaguita","Ilang-Ilang","Gumamela"],ends:Date.now()+135*60000};
+const S={chk:[1,1,1,1,1,1,0,0,0],bk:"battery",cap:1200,hrs:4};
+let PC=(()=>{try{return JSON.parse(localStorage.getItem("bs_prep"))||[]}catch(e){return[]}})();
+
+const $=id=>document.getElementById(id);
+const t=k=>T[k][L];
+const tmH=x=>(+x[1]%12)+(x[3].toLowerCase()==="p"?12:0)+(x[2]?+x[2]/60:0);
+const w=list=>list.reduce((s,i)=>s+APP[i][2],0);
+const rtOf=(list,usable)=>{const tw=w(list);return tw?usable/tw:Infinity};
+const fmt=x=>isFinite(x)?x.toFixed(1):"∞";
+
+function toggleLang(){L=1-L;applyLang();}
+function toggleLg(){lg=!lg;document.documentElement.classList.toggle("lg",lg);$("lgBtn").setAttribute("aria-pressed",lg);}
+function applyLang(){
+  document.documentElement.lang=L?"fil":"en";
+  $("bnr").textContent=t("banner");$("ttl").textContent=t("title");
+  $("langBtn").textContent=t("lang");$("lgBtn").textContent=t("lg");$("lgBtn").setAttribute("aria-pressed",lg);
+  $("foot").textContent=t("foot");
+  buildTabs();renderAll();
+}
+function renderAll(){renderHome();renderShed();renderMap();renderReport();renderPrep();renderAdmin();}
+
+const TABS=[["home","🏠","home"],["shed","🔌","shed"],["map","🗺️","map"],["report","📣","report"],["prep","🎒","prep"],["admin","🛠️","admin"]];
+function buildTabs(){
+  $("tabs").innerHTML=TABS.map(([id,ic,k])=>`<button class="tab" role="tab" data-id="${id}" aria-selected="${cur===id}" aria-controls="v-${id}" aria-label="${t(k)}" onclick="showTab('${id}')"><span aria-hidden="true">${ic}</span>${t(k)}</button>`).join("");
+}
+function showTab(id){
+  cur=id;
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("act",v.id==="v-"+id));
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.id===id));
+  window.scrollTo(0,0);
+}
+
+function togR(i){openR=openR.includes(i)?openR.filter(x=>x!==i):[...openR,i];renderHome();}
+function riskCard(r,i){
+  const o=openR.includes(i);
+  return `<button class="risk ${o?"open":""}" aria-expanded="${o}" onclick="togR(${i})"><b>${t(r.k)}</b> <span class="pill ${CLS[r.lv]}"><span aria-hidden="true">${ICON[r.lv]}</span>${LV[r.lv][L]}</span><br>${r.r[L]}<span class="det">${t("conf")}</span></button>`;
+}
+function renderHome(){
+  $("v-home").innerHTML=`
+  <div class="card"><p style="margin:0">💡 ${t("tip")}</p></div>
+  <div class="adv" role="region" aria-label="${t("advTitle")}">
+    <span class="pill lvM"><span aria-hidden="true">📢</span> ${t("advTitle")}</span>
+    <p><b>${t("advSrc")}</b></p>
+    <p>${t("advDate")}: ${adv.date}<br>${t("advWin")}: ${adv.start} – ${adv.end}<br>${t("advBrgy")}: ${adv.brgy.join(", ")}</p>
+    <p>${t("countdown")}: <b id="cd" aria-live="polite">--:--:--</b></p>
+    <p class="muted">${t("extend")}</p>
+    <button class="btn" aria-label="${t("viewSrc")}">${t("viewSrc")}</button>
+  </div>
+  <h2>${t("riskTitle")}</h2>
+  ${RISKS.map(riskCard).join("")}
+  <p class="muted">${t("upd")}: ${LU}</p>
+  <label class="row"><input type="checkbox" role="switch" aria-label="${t("offSw")}" ${offline?"checked":""} onchange="offline=this.checked;renderHome()"> ${t("offSw")}</label>
+  ${offline?`<span class="chip" role="status">${t("offline")}</span>`:""}`;
+  tick();
+}
+function tick(){
+  const el=$("cd");if(!el)return;
+  const s=Math.max(0,Math.floor((adv.ends-Date.now())/1000));
+  el.textContent=[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(n=>String(n).padStart(2,"0")).join(":");
+}
+
+function renderShed(){
+  $("v-shed").innerHTML=`
+  <div class="card"><h2>${t("appl")}</h2>
+    ${APP.map((a,i)=>`<label class="row"><input type="checkbox" ${S.chk[i]?"checked":""} aria-label="${a[L]}" onchange="S.chk[${i}]=this.checked;renderShedRes()"> ${a[L]} <span class="muted">(${a[2]} W)</span></label>`).join("")}
+  </div>
+  <div class="card">
+    <label style="display:block"><b>${t("backup")}</b>
+      <select aria-label="${t("backup")}" onchange="S.bk=this.value;renderShedRes()">
+        ${BK.map(b=>`<option value="${b[0]}" ${S.bk===b[0]?"selected":""}>${L?b[2]:b[1]}</option>`).join("")}
+      </select></label>
+    <label style="display:block">${t("cap")}<input type="number" min="0" value="${S.cap}" oninput="S.cap=+this.value||0;renderShedRes()"></label>
+    <label style="display:block">${t("hrs")}<input type="number" min="0" step="0.5" value="${S.hrs}" oninput="S.hrs=+this.value||0;renderShedRes()"></label>
+  </div>
+  <div id="shedRes" aria-live="polite"></div>`;
+  renderShedRes();
+}
+function renderShedRes(){
+  const el=$("shedRes");if(!el)return;
+  if(S.bk==="none"){el.innerHTML=`<div class="card"><p>${t("noBk")}</p></div>`;return;}
+  const on=APP.map((a,i)=>i).filter(i=>S.chk[i]);
+  const tot=w(on),usable=S.cap*0.8,rt=rtOf(on,usable);
+  let keep=[...on],off=[];
+  while(keep.length&&rtOf(keep,usable)<S.hrs)off.push(keep.pop());
+  const shortNow=rtOf(keep,usable)<S.hrs;
+  el.innerHTML=`
+  <div class="card"><h2>${t("calc")}</h2>
+    <p>${t("usable")}: ${S.cap} Wh × 0.8 = <b>${usable.toFixed(0)} Wh</b></p>
+    <p>${t("totalW")}: <b>${tot} W</b></p>
+    <p>${t("runtime")}: ${usable.toFixed(0)} Wh ÷ ${tot} W = <b>${fmt(rt)} h</b></p>
+    <p>${t("outage")}: <b>${S.hrs} h</b></p>
+    ${off.length?`<p><b>${t("offFirst")}:</b> ${off.map(i=>APP[i][L]).join(", ")}</p><p><b>${t("keepOn")}:</b> ${keep.map(i=>APP[i][L]).join(", ")||"-"}</p>`:`<p>${t("planOk")}</p>`}
+    ${shortNow?`<div class="warn">${t("shortWarn")}</div>`:""}
+    ${S.bk==="generator"?`<div class="warn"><b>${t("co")}</b></div>`:""}
+  </div>`;
+}
+
+function hexSel(i){HS=i;renderMap();}
+function renderMap(){
+  const defs=`<defs><pattern id="pm" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" fill="#7a4a00" opacity=".35"/></pattern><pattern id="ph" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.6" fill="#a10d1f" opacity=".6"/></pattern></defs>`;
+  const cells=HEX.map(([n,l],i)=>{
+    const c=i%4,r=Math.floor(i/4),cx=44+c*52+(r%2)*26,cy=42+r*45;
+    const pts=[0,1,2,3,4,5].map(k=>{const a=(60*k-90)*Math.PI/180;return (cx+28*Math.cos(a)).toFixed(1)+","+(cy+28*Math.sin(a)).toFixed(1)}).join(" ");
+    return `<g tabindex="0" role="button" aria-label="${t("brgyW")} ${n}, ${LV[l][L]}" onclick="hexSel(${i})" onkeydown="if(event.key==='Enter')hexSel(${i})" style="cursor:pointer">
+      <polygon points="${pts}" fill="${FILL[l]}" stroke="#333" stroke-width="1.5"/>
+      ${l?`<polygon points="${pts}" fill="url(#${l===1?"pm":"ph"})"/>`:""}
+      <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="8.5" font-weight="700" fill="#000">${ICON[l]} ${LV[l][L]}</text>
+      ${CROWD.includes(i)?`<circle cx="${cx+14}" cy="${cy-16}" r="4.5" fill="#1f4fbf" stroke="#fff" aria-hidden="true"/>`:""}
+    </g>`;
+  }).join("");
+  $("v-map").innerHTML=`<div class="card"><h2>${t("mapT")}</h2>
+    <svg viewBox="0 0 260 170" width="100%" role="group" aria-label="${t("mapT")}">${defs}${cells}</svg>
+    <p id="hexInfo" class="hexinfo" aria-live="polite">${HS<0?t("tapHex"):`${t("brgyW")} ${HEX[HS][0]}: ${LV[HEX[HS][1]][L]}`}</p>
+    <p class="muted">${t("legend")}</p><p class="muted">${t("privacy")}</p></div>`;
+}
+
+function rep(k){
+  const n=Date.now();
+  if(n-lastT[k]<600000){rmsg=t("already");}
+  else{lastT[k]=n;if(k==="o")RC++;rmsg=t("thanks");}
+  renderReport();
+}
+function renderReport(){
+  $("v-report").innerHTML=`<div class="card"><h2>${t("rTitle")}</h2>
+  <button class="big" style="background:#a10d1f" aria-label="${t("pOut")}" onclick="rep('o')"><span aria-hidden="true">⚡</span> ${t("pOut")}</button>
+  <button class="big" style="background:#0a6b33" aria-label="${t("pBack")}" onclick="rep('b')"><span aria-hidden="true">⚡</span> ${t("pBack")}</button>
+  <p aria-live="polite"><b>${rmsg}</b></p>
+  <p class="muted">${t("rCount")}: ${RC}</p>
+  ${RC>=3?`<div class="adv" role="alert"><b>${t("declared")}</b></div>`:""}</div>`;
+}
+
+function togP(i,v){PC[i]=v;try{localStorage.setItem("bs_prep",JSON.stringify(PC))}catch(e){}renderPrep();}
+function renderPrep(){
+  const done=PREP.filter((_,i)=>PC[i]).length;
+  $("v-prep").innerHTML=`<div class="card"><h2>${t("prepT")}</h2><p class="muted">${done} / ${PREP.length}</p>
+  ${PREP.map((p,i)=>`<label class="row"><input type="checkbox" ${PC[i]?"checked":""} onchange="togP(${i},this.checked)"> ${p[L]}</label>`).join("")}</div>`;
+}
+
+function extract(){
+  const d=ADT.match(/(\w+\.?\s\d{1,2},?\s\d{4}|\d{1,2}\/\d{1,2}\/\d{4})/);
+  const tm=[...ADT.matchAll(TM)];
+  const b=ADT.match(/(?:brgy\.?|barangays?)\s*:?\s*([^\n]+)/i);
+  AF={d:d?d[1]:"",w:tm.length>=2?tm[0][0].trim()+" – "+tm[1][0].trim():"",b:b?b[1].trim():""};
+  admMsg=t("extOk");renderAdmin();
+}
+function publish(){
+  const m=[...AF.w.matchAll(TM)];
+  if(m.length<2){admMsg=t("badParse");renderAdmin();return;}
+  const h=(tmH(m[1])-tmH(m[0])+24)%24;
+  adv.date=AF.d||adv.date;adv.start=m[0][0].trim();adv.end=m[1][0].trim();adv.hrs=h||4;
+  adv.brgy=AF.b.split(/,| at | and /).map(s=>s.trim()).filter(Boolean);
+  adv.ends=Date.now()+135*60000;
+  S.hrs=adv.hrs;admMsg=t("pubOk");renderAll();
+}
+function renderAdmin(){
+  $("v-admin").innerHTML=`<div class="card"><h2>${t("admT")}</h2>
+  <label style="display:block">${t("paste")}<textarea rows="7" aria-label="${t("paste")}" oninput="ADT=this.value">${ADT}</textarea></label>
+  <button class="big" onclick="extract()">${t("extract")}</button>
+  <label style="display:block">${t("fDate")}<input type="text" value="${AF.d}" aria-label="${t("fDate")}" oninput="AF.d=this.value"></label>
+  <label style="display:block">${t("fWin")}<input type="text" value="${AF.w}" aria-label="${t("fWin")}" oninput="AF.w=this.value"></label>
+  <label style="display:block">${t("fBrgy")}<input type="text" value="${AF.b}" aria-label="${t("fBrgy")}" oninput="AF.b=this.value"></label>
+  <button class="big" style="background:#0a6b33" onclick="publish()">${t("pub")}</button>
+  <p aria-live="polite">${admMsg}</p>
+  <p class="muted">${t("adminNote")}</p></div>`;
+}
+
+setInterval(tick,1000);
+applyLang();
+</script>
+</body>
+</html>
